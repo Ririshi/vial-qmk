@@ -294,7 +294,21 @@ bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
 }
 
 bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
-    return QS_tapping_hold_on_other_key_press;
+    // RIRISHI MODIFIED: Changed to only apply to certain keys
+    if (!QS_tapping_hold_on_other_key_press) return false;
+
+    switch (keycode) {
+        case LT(8, KC_ESCAPE):
+        case LT(6, KC_SPACE):
+        case LT(7, KC_TAB):
+        case LT(9, KC_BACKSPACE):
+        case LT(7, KC_ENTER):
+            // Immediately select the hold action when another key is pressed.
+            return true;
+        default:
+            // Do not select the hold action when another key is pressed.
+            return false;
+    }
 }
 
 uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
