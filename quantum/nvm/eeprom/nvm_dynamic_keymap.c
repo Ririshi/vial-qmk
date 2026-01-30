@@ -90,9 +90,19 @@ STATIC_ASSERT(DYNAMIC_KEYMAP_EEPROM_MAX_ADDR <= 65535, "DYNAMIC_KEYMAP_EEPROM_MA
 #define VIAL_ALT_REPEAT_KEY_SIZE 0
 #endif
 
+// RGB Indicator
+#define RULE_LIGHTING_EEPROM_ADDR (VIAL_ALT_REPEAT_KEY_EEPROM_ADDR + VIAL_ALT_REPEAT_KEY_SIZE)
+
+#ifdef RULE_LIGHTING_ENABLE
+#include "rule_lighting.h"
+#define RULE_LIGHTING_SIZE (sizeof(rule_lighting_entry_t) * RULE_LIGHTING_ENTRIES)
+#else
+#define RULE_LIGHTING_SIZE 0
+#endif
+
 // Dynamic macro
 #ifndef DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR
-#    define DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR (VIAL_ALT_REPEAT_KEY_EEPROM_ADDR + VIAL_ALT_REPEAT_KEY_SIZE)
+#    define DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR (RULE_LIGHTING_EEPROM_ADDR + RULE_LIGHTING_SIZE)
 #endif
 
 // Sanity check that dynamic keymaps fit in available EEPROM
@@ -167,7 +177,7 @@ void nvm_dynamic_keymap_update_encoder(uint8_t layer, uint8_t encoder_id, bool c
 
 void nvm_dynamic_keymap_read_buffer(uint32_t offset, uint32_t size, uint8_t *data) {
     uint32_t dynamic_keymap_eeprom_size = DYNAMIC_KEYMAP_LAYER_COUNT * MATRIX_ROWS * MATRIX_COLS * 2;
-    void *   source                     = (void *)(uintptr_t)(DYNAMIC_KEYMAP_EEPROM_ADDR + offset);
+    void    *source                     = (void *)(uintptr_t)(DYNAMIC_KEYMAP_EEPROM_ADDR + offset);
     uint8_t *target                     = data;
     for (uint32_t i = 0; i < size; i++) {
         if (offset + i < dynamic_keymap_eeprom_size) {
@@ -181,8 +191,8 @@ void nvm_dynamic_keymap_read_buffer(uint32_t offset, uint32_t size, uint8_t *dat
 }
 
 void nvm_dynamic_keymap_update_buffer(uint32_t offset, uint32_t size, uint8_t *data) {
-    uint16_t dynamic_keymap_eeprom_size = DYNAMIC_KEYMAP_LAYER_COUNT * MATRIX_ROWS * MATRIX_COLS * 2;
-    void *   target                     = (void *)((uintptr_t)(DYNAMIC_KEYMAP_EEPROM_ADDR + offset));
+    uint32_t dynamic_keymap_eeprom_size = DYNAMIC_KEYMAP_LAYER_COUNT * MATRIX_ROWS * MATRIX_COLS * 2;
+    void    *target                     = (void *)(uintptr_t)(DYNAMIC_KEYMAP_EEPROM_ADDR + offset);
     uint8_t *source                     = data;
 
 #ifdef VIAL_ENABLE
@@ -243,7 +253,7 @@ uint32_t nvm_dynamic_keymap_macro_size(void) {
 }
 
 void nvm_dynamic_keymap_macro_read_buffer(uint32_t offset, uint32_t size, uint8_t *data) {
-    void *   source = (void *)(uintptr_t)(DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR + offset);
+    void    *source = (void *)(uintptr_t)(DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR + offset);
     uint8_t *target = data;
     for (uint16_t i = 0; i < size; i++) {
         if (offset + i < DYNAMIC_KEYMAP_MACRO_EEPROM_SIZE) {
@@ -257,7 +267,7 @@ void nvm_dynamic_keymap_macro_read_buffer(uint32_t offset, uint32_t size, uint8_
 }
 
 void nvm_dynamic_keymap_macro_update_buffer(uint32_t offset, uint32_t size, uint8_t *data) {
-    void *   target = (void *)(uintptr_t)(DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR + offset);
+    void    *target = (void *)(uintptr_t)(DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR + offset);
     uint8_t *source = data;
     for (uint16_t i = 0; i < size; i++) {
         if (offset + i < DYNAMIC_KEYMAP_MACRO_EEPROM_SIZE) {
@@ -269,8 +279,8 @@ void nvm_dynamic_keymap_macro_update_buffer(uint32_t offset, uint32_t size, uint
 }
 
 void nvm_dynamic_keymap_macro_reset(void) {
-    void *  start     = (void *)(uintptr_t)(DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR);
-    void *  end       = (void *)(uintptr_t)(DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR + DYNAMIC_KEYMAP_MACRO_EEPROM_SIZE);
+    void   *start     = (void *)(uintptr_t)(DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR);
+    void   *end       = (void *)(uintptr_t)(DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR + DYNAMIC_KEYMAP_MACRO_EEPROM_SIZE);
     long    remaining = end - start;
     uint8_t dummy[16] = {0};
     for (int i = 0; i < DYNAMIC_KEYMAP_MACRO_EEPROM_SIZE; i += sizeof(dummy)) {
@@ -384,5 +394,17 @@ int nvm_dynamic_keymap_set_alt_repeat_key(uint8_t index, const vial_alt_repeat_k
     eeprom_write_block(entry, address, sizeof(vial_alt_repeat_key_entry_t));
 
     return 0;
+}
+#endif
+
+#ifdef RULE_LIGHTING_ENABLE
+void nvm_dynamic_keymap_load_rgb_indicators(rule_lighting_entry_t *entries) {
+    void *address = (void*)RULE_LIGHTING_EEPROM_ADDR;
+    eeprom_read_block(entries, address, sizeof(rule_lighting_entry_t) * RULE_LIGHTING_ENTRIES);
+}
+
+void nvm_dynamic_keymap_save_rgb_indicators(const rule_lighting_entry_t *entries) {
+    void *address = (void*)RULE_LIGHTING_EEPROM_ADDR;
+    eeprom_write_block(entries, address, sizeof(rule_lighting_entry_t) * RULE_LIGHTING_ENTRIES);
 }
 #endif

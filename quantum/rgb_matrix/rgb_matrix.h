@@ -25,6 +25,10 @@
 #include "color.h"
 #include "keyboard.h"
 
+#ifdef RULE_LIGHTING_ENABLE
+#include "rule_lighting.h"
+#endif
+
 #ifndef RGB_MATRIX_TIMEOUT
 #    define RGB_MATRIX_TIMEOUT 0
 #endif
@@ -218,7 +222,15 @@ void        rgb_matrix_decrease_speed_noeeprom(void);
 led_flags_t rgb_matrix_get_flags(void);
 void        rgb_matrix_set_flags(led_flags_t flags);
 void        rgb_matrix_set_flags_noeeprom(led_flags_t flags);
+void        rgb_matrix_flags_step_noeeprom(void);
+void        rgb_matrix_flags_step(void);
+void        rgb_matrix_flags_step_reverse_noeeprom(void);
+void        rgb_matrix_flags_step_reverse(void);
 void        rgb_matrix_update_pwm_buffers(void);
+
+#ifdef RGB_MATRIX_MODE_NAME_ENABLE
+const char *rgb_matrix_get_mode_name(uint8_t mode);
+#endif // RGB_MATRIX_MODE_NAME_ENABLE
 
 #ifndef RGBLIGHT_ENABLE
 #    define eeconfig_update_rgblight_current eeconfig_force_flush_rgb_matrix
